@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Customers</title>
+
+    <style>
+        body {
+            background: #0f172a;
+            color: white;
+            font-family: Arial;
+            padding: 20px;
+        }
+
+        input {
+            width: 300px;
+            padding: 8px;
+            margin: 5px 0;
+        }
+
+        button {
+            padding: 6px 12px;
+            margin: 5px;
+            cursor: pointer;
+        }
+
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #334155;
+            text-align: left;
+        }
+
+        .edit {
+            background: #2563eb;
+            color: white;
+            border: none;
+        }
+
+        .delete {
+            background: #dc2626;
+            color: white;
+            border: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>Create or manage customers</h2>
+
+    <div>
+        <input id="name" placeholder="Name">
+        <br>
+
+        <input id="email" placeholder="Email">
+        <br>
+
+        <input id="phone" placeholder="Phone">
+        <br>
+
+        <button onclick="save()">Add</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody id="tbody"></tbody>
+    </table>
+
+    <script>
+
+        let editingId = null;
+
+        const API = "http://localhost:5000/customers";
+
+
+        // Load customers
+        function load() {
+
+            fetch(API)
+                .then(res => res.json())
+                .then(data => {
+
+                    const tbody = document.getElementById("tbody");
+
+                    tbody.innerHTML = "";
+
+                    data.forEach(c => {
+
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${c.id}</td>
+                                <td>${c.name}</td>
+                                <td>${c.email}</td>
+                                <td>${c.phone}</td>
+
+                                <td>
+                                    <button
+                                        class="edit"
+                                        onclick="edit(${c.id})">
+                                        Edit
+                                    </button>
+
+                                    <button
+                                        class="delete"
+                                        onclick="removeCustomer(${c.id})">
+                                        Delete
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+
+                    });
+
+                });
+        }
+
+
+        // Add or update customer
+        function save() {
+
+            const body = {
+
+                name: document.getElementById("name").value,
+
+                email: document.getElementById("email").value,
+
+                phone: document.getElementById("phone").value
+
+            };
+
+
+            const method = editingId ? "PUT" : "POST";
+
+
+            const url = editingId
+                ? `${API}/${editingId}`
+                : API;
+
+
+            fetch(url, {
+
+                method: method,
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify(body)
+
+            })
+
+            .then(() => {
+
+                editingId = null;
+
+                document.getElementById("name").value = "";
+
+                document.getElementById("email").value = "";
+
+                document.getElementById("phone").value = "";
+
+                load();
+
+            });
+
+        }
+
+
+        // Edit customer
+        function edit(id) {
+
+            fetch(API)
+
+                .then(res => res.json())
+
+                .then(data => {
+
+                    const c = data.find(x => x.id === id);
+
+                    document.getElementById("name").value = c.name;
+
+                    document.getElementById("email").value = c.email;
+
+                    document.getElementById("phone").value = c.phone;
+
+                    editingId = id;
+
+                });
+
+        }
+
+
+        // Delete customer
+        function removeCustomer(id) {
+
+            fetch(`${API}/${id}`, {
+
+                method: "DELETE"
+
+            }).then(load);
+
+        }
+
+
+        // Load data when page opens
+        load();
+
+    </script>
+
+</body>
+</html>
